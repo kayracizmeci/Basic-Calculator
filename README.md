@@ -1,2 +1,2 @@
-# Basic-Calculator-v0.1
-A very simple Python calculator that can perform 2 basic operations: addition and subtraction. 
+# Basic-Calculator
+Basic Calculator is a Python-based calculation tool designed as a progressive learning project. Across its versions, it performs essential math operations such as addition, subtraction, multiplication, and division, while later versions introduce extra features like square root, power calculations, random mode, repeated operations, input validation, and error handling. The project demonstrates fundamental Python concepts including user input, conditional logic, loops, functions, and basic exception handling in a clear and beginner-friendly way.
