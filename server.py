@@ -12,18 +12,18 @@ def receive_data(incoming_dict: dict):
         
     if mod == 'op':
           operation = incoming_dict.get('operation')
-          num1 = incoming_dict.get('num1', None) 
+          num1 = incoming_dict.get('num1', None)
           num2 = incoming_dict.get('num2', None)
     
     # Lambda Operations And Filter
     operations = {
-        'addition': lambda n1, n2: n1 + n2 if n1 != None and n2 != None else 'no value',
-        'subtraction': lambda n1, n2: n1 - n2 if n1 != None and n2 != None else 'no value',
-        'multiplication': lambda n1, n2: n1 * n2 if n1 != None and n2 != None else 'no value',
-        'division': lambda n1, n2: n1 / n2 if n1 != None and n2 != None and n2 != 0 else 'no value/division by zero',
-        'power': lambda n1, n2: n1 ** n2 if n1 != None and n2 != None and n1 > 0 and float(n2).is_integer() else 'complex',
-        'square_root': lambda n1, n2: math.sqrt(n1) if n1 != None and n1 >= 0 else 'undefined/complex',
-        'percentage': lambda n1, n2: (n1 * n2) / 100 if n1 != None and n2 != None else 'no value'
+        'addition': lambda n1, n2: float(n1) + float(n2) if n1 != None and n2 != None else 'no value',
+        'subtraction': lambda n1, n2: float(n1) - float(n2) if n1 != None and n2 != None else 'no value',
+        'multiplication': lambda n1, n2: float(n1) * float(n2) if n1 != None and n2 != None else 'no value',
+        'division': lambda n1, n2: float(n1) / float(n2) if n1 != None and n2 != None and float(n2) != 0 else 'no value/division by zero',
+        'power': lambda n1, n2: float(n1) ** float(n2) if n1 != None and n2 != None and float(n1) > 0 and float(n2).is_integer() else 'complex',
+        'square_root': lambda n1, n2: math.sqrt(float(n1)) if n1 != None and float(n1) >= 0 else 'undefined/complex',
+        'percentage': lambda n1, n2: (float(n1) * float(n2)) / 100 if n1 != None and n2 != None else 'no value'
     }
 
     # Controls
@@ -44,7 +44,11 @@ def receive_data(incoming_dict: dict):
         alg_mod = incoming_dict.get('alg_mod')
         if alg_mod == 'run':
             steps = incoming_dict.get('steps')
-            x = incoming_dict.get('x')
+            x = (incoming_dict.get('x'))
+            if x == None:
+                x = 0
+            else:
+                x = float(x)
             steplen = len(steps) + 1 # Adding one for getting all values in the range.
             
             for key in range(1, steplen): 
