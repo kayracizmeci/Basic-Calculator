@@ -8,10 +8,12 @@ app = FastAPI()
 def receive_data(incoming_dict: dict):
 
     # Decoder
-    operation = incoming_dict.get('operation')
-    num1 = incoming_dict.get('num1', None) 
-    num2 = incoming_dict.get('num2', None)
-
+    mod = incoming_dict.get('mod')
+        
+    if mod == 'op':
+          operation = incoming_dict.get('operation')
+          num1 = incoming_dict.get('num1', None) 
+          num2 = incoming_dict.get('num2', None)
     
     # Lambda Operations And Filter
     operations = {
@@ -25,17 +27,38 @@ def receive_data(incoming_dict: dict):
     }
 
     # Controls
-    selected_operation = operations.get(operation)
-    if selected_operation is None:
-        return {'error': 'invalid operation', 'status': 'failed'}
- 
-    result = selected_operation(num1, num2)
-    final_response = {'result': result}
-    if isinstance(result, str):
-        final_response =  {'error': result, 'status':'failed'}
-    else:
-        final_response =  {'result': result, 'status':'success'}
-    return final_response
+
+    # Operation 
+    if mod == 'op':
+      selected_operation = operations.get(operation)  
+      if selected_operation is None:
+          return {'error': 'invalid operation', 'status': 'failed'}
+      result = selected_operation(num1, num2)
+      if isinstance(result, str):
+          return {'error': result, 'status': 'failed'}
+    
+      return {'result': result, 'status': 'success'}
+    
+    # Algorithm
+    if mod == 'alg':
+        alg_mod = incoming_dict.get('alg_mod')
+        if alg_mod == 'run':
+            steps = incoming_dict.get('steps')
+            x = incoming_dict.get('x')
+            steplen = len(steps) + 1 # Adding one for getting all values in the range.
+            
+            for key in range(1, steplen): 
+                number_op = steps.get(str(key)) 
+                if number_op:
+                    operation_value = number_op['number'] # Getting the number that operation comes with.
+                    operation_name = number_op['operation']
+                    selected_operation = operations.get(operation_name)
+                    
+                    if selected_operation:
+                        operation_value = int(operation_value)
+                        x = selected_operation(x, operation_value) # x is the number that user enters at the end.
+            
+            return {'result': x, 'status': 'success'}
 
 # Server Starting
 if __name__ == '__main__':
