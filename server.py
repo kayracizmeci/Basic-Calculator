@@ -1,8 +1,25 @@
 from fastapi import FastAPI
 import uvicorn
 import math
+import os
+import json
 
 app = FastAPI()
+
+
+file_name = 'algorithm.json'
+if not os.path.exists(file_name):
+    with open(file_name, 'w') as f:
+        json.dump({}, f)
+try:
+    with open(file_name, 'r') as f:
+        save_data = json.load(f)
+except (json.JSONDecodeError, IOError):
+    save_data = {}
+if not isinstance(save_data, dict):
+    save_data = {}
+
+
 
 @app.post('/receive_data')
 def receive_data(incoming_dict: dict):
@@ -42,6 +59,45 @@ def receive_data(incoming_dict: dict):
     # Algorithm
     if mod == 'alg':
         alg_mod = incoming_dict.get('alg_mod')
+        if alg_mod == 'save':
+            alg_save_name = incoming_dict.get('alg_save_name') # We are getting the key for accesing the whole data.
+            alg_data = incoming_dict.get(alg_save_name)
+            save_data[alg_save_name] = alg_data
+            with open(file_name, 'w') as f:
+                json.dump(save_data, f, indent=4)      
+            return {'status': 'saved'}
+        
+        if alg_mod == 'run_save':
+            try: # For not crashing if modified from outside.
+                with open(file_name, 'r') as f:
+                    save_data = json.load(f)
+            except:
+                save_data = {}
+
+            alg_save_name = incoming_dict.get('alg_save_name') # Getting the key.
+            steps = save_data.get(alg_save_name)
+            x = incoming_dict.get('x')
+            
+            if x == None:
+                x = 0
+            else:
+                x = float(x)
+            
+            if steps:
+                steplen = len(steps) + 1
+                for key in range(1, steplen): 
+                    number_op = steps.get(str(key)) 
+                    if number_op:
+                        operation_value = number_op['number']
+                        operation_name = number_op['operation']
+                        selected_operation = operations.get(operation_name)
+                        
+                        if selected_operation:
+                            operation_value = float(operation_value)
+                            x = selected_operation(x, operation_value)
+                
+                return {'result': x, 'status': 'success'}
+            
         if alg_mod == 'run':
             steps = incoming_dict.get('steps')
             x = (incoming_dict.get('x'))
