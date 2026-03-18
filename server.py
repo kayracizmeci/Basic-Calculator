@@ -7,10 +7,15 @@ import json
 app = FastAPI()
 
 
+
 file_name = 'algorithm.json'
-if not os.path.exists(file_name):
+
+def save(data):
     with open(file_name, 'w') as f:
-        json.dump({}, f)
+        json.dump(data, f, indent=4)
+
+if not os.path.exists(file_name):
+    save({})
 try:
     with open(file_name, 'r') as f:
         save_data = json.load(f)
@@ -77,8 +82,7 @@ def receive_data(incoming_dict: dict):
             alg_save_name = incoming_dict.get('alg_save_name') # We are getting the key for accesing the whole data.
             alg_data = incoming_dict.get(alg_save_name)
             save_data[alg_save_name] = alg_data
-            with open(file_name, 'w') as f:
-                json.dump(save_data, f, indent=4)      
+            save(save_data)      
             return {'status': 'saved'}
         
         if alg_mod == 'run_save':
@@ -100,8 +104,7 @@ def receive_data(incoming_dict: dict):
             alg_save_name = incoming_dict.get('alg_save_name')
             removed_item = save_data.pop(alg_save_name, None)
             if removed_item is not None:
-                with open(file_name, 'w') as f:
-                    json.dump(save_data, f, indent=4)
+                save(save_data)
                 return {'status': 'deleted'}
             else:
                 return {'status': 'failed', 'error': f'there is no save as {alg_save_name}'}
@@ -109,8 +112,7 @@ def receive_data(incoming_dict: dict):
        
         if alg_mod == 'clear_all':
             save_data.clear() 
-            with open(file_name, 'w') as f:
-                json.dump({}, f, indent=4) 
+            save({})
             return {'status': 'all_clean'}
 
 # Server Starting
