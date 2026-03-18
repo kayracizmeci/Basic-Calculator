@@ -69,8 +69,7 @@ def receive_data(incoming_dict: dict):
           num1 = incoming_dict.get('num1', None)
           num2 = incoming_dict.get('num2', None)
 
-    # Controls
-    # Controls
+   
 
     # Operation 
     if mod == 'op':
