@@ -51,7 +51,7 @@ def receive_data(incoming_dict: dict):
         'subtraction': lambda n1, n2: float(n1) - float(n2) if n1 != None and n2 != None else 'no value',
         'multiplication': lambda n1, n2: float(n1) * float(n2) if n1 != None and n2 != None else 'no value',
         'division': lambda n1, n2: float(n1) / float(n2) if n1 != None and n2 != None and float(n2) != 0 else 'no value/division by zero',
-        'power': lambda n1, n2: float(n1) ** float(n2) if n1 != None and n2 != None and float(n1) > 0 and float(n2).is_integer() else 'complex',
+        'power': lambda n1, n2: float(n1) ** float(n2) if not (float(n1) < 0 and float(n2) % 1 != 0) else 'complex',
         'square_root': lambda n1, n2: math.sqrt(float(n1)) if n1 != None and float(n1) >= 0 else 'undefined/complex',
         'percentage': lambda n1, n2: (float(n1) * float(n2)) / 100 if n1 != None and n2 != None else 'no value'
     }
