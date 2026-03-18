@@ -6,13 +6,22 @@ import json
 
 app = FastAPI()
 
-
-
 file_name = 'algorithm.json'
 
 def save(data):
     with open(file_name, 'w') as f:
         json.dump(data, f, indent=4)
+
+
+def load():
+    try:
+        with open(file_name, 'r') as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    return data
 
 if not os.path.exists(file_name):
     save({})
@@ -23,6 +32,16 @@ except (json.JSONDecodeError, IOError):
     save_data = {}
 if not isinstance(save_data, dict):
     save_data = {}
+
+operations = {
+    'addition': lambda n1, n2: float(n1) + float(n2) if n1 != None and n2 != None else 'no value',
+    'subtraction': lambda n1, n2: float(n1) - float(n2) if n1 != None and n2 != None else 'no value',
+    'multiplication': lambda n1, n2: float(n1) * float(n2) if n1 != None and n2 != None else 'no value',
+    'division': lambda n1, n2: float(n1) / float(n2) if n1 != None and n2 != None and float(n2) != 0 else 'no value/division by zero',
+    'power': lambda n1, n2: float(n1) ** float(n2) if not (float(n1) < 0 and float(n2) % 1 != 0) else 'complex',
+    'square_root': lambda n1, n2: math.sqrt(float(n1)) if n1 != None and float(n1) >= 0 else 'undefined/complex',
+    'percentage': lambda n1, n2: (float(n1) * float(n2)) / 100 if n1 != None and n2 != None else 'no value'
+}
 
 def algorithm_control(x, steps, operations):
     x = float(x) if x is not None else 0.0          
@@ -49,18 +68,8 @@ def receive_data(incoming_dict: dict):
           operation = incoming_dict.get('operation')
           num1 = incoming_dict.get('num1', None)
           num2 = incoming_dict.get('num2', None)
-    
-    # Lambda Operations And Filter
-    operations = {
-        'addition': lambda n1, n2: float(n1) + float(n2) if n1 != None and n2 != None else 'no value',
-        'subtraction': lambda n1, n2: float(n1) - float(n2) if n1 != None and n2 != None else 'no value',
-        'multiplication': lambda n1, n2: float(n1) * float(n2) if n1 != None and n2 != None else 'no value',
-        'division': lambda n1, n2: float(n1) / float(n2) if n1 != None and n2 != None and float(n2) != 0 else 'no value/division by zero',
-        'power': lambda n1, n2: float(n1) ** float(n2) if not (float(n1) < 0 and float(n2) % 1 != 0) else 'complex',
-        'square_root': lambda n1, n2: math.sqrt(float(n1)) if n1 != None and float(n1) >= 0 else 'undefined/complex',
-        'percentage': lambda n1, n2: (float(n1) * float(n2)) / 100 if n1 != None and n2 != None else 'no value'
-    }
 
+    # Controls
     # Controls
 
     # Operation 
@@ -87,6 +96,8 @@ def receive_data(incoming_dict: dict):
         
         if alg_mod == 'run_save':
             alg_save_name = incoming_dict.get('alg_save_name') 
+            global save_data
+            save_data = load()
             steps = save_data.get(alg_save_name)
             x = incoming_dict.get('x')
             x = algorithm_control(x, steps, operations)
