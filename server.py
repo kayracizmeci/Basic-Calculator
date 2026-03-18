@@ -19,7 +19,20 @@ except (json.JSONDecodeError, IOError):
 if not isinstance(save_data, dict):
     save_data = {}
 
-
+def algorithm_control(x, steps, operations):
+    x = float(x) if x is not None else 0.0          
+    if steps:
+        steplen = len(steps) + 1
+        for key in range(1, steplen): 
+            if isinstance(x, str): break
+            number_op = steps.get(str(key)) 
+            if number_op:
+                operation_value = float(number_op['number'])
+                operation_name = number_op['operation']
+                selected_operation = operations.get(operation_name)  
+                if selected_operation:
+                    x = selected_operation(x, operation_value)
+    return x
 
 @app.post('/receive_data')
 def receive_data(incoming_dict: dict):
@@ -59,6 +72,7 @@ def receive_data(incoming_dict: dict):
     # Algorithm
     if mod == 'alg':
         alg_mod = incoming_dict.get('alg_mod')
+
         if alg_mod == 'save':
             alg_save_name = incoming_dict.get('alg_save_name') # We are getting the key for accesing the whole data.
             alg_data = incoming_dict.get(alg_save_name)
@@ -68,57 +82,36 @@ def receive_data(incoming_dict: dict):
             return {'status': 'saved'}
         
         if alg_mod == 'run_save':
-            try: # For not crashing if modified from outside.
-                with open(file_name, 'r') as f:
-                    save_data = json.load(f)
-            except:
-                save_data = {}
-
-            alg_save_name = incoming_dict.get('alg_save_name') # Getting the key.
+            alg_save_name = incoming_dict.get('alg_save_name') 
             steps = save_data.get(alg_save_name)
             x = incoming_dict.get('x')
-            
-            if x == None:
-                x = 0
-            else:
-                x = float(x)
-            
-            if steps:
-                steplen = len(steps) + 1
-                for key in range(1, steplen): 
-                    number_op = steps.get(str(key)) 
-                    if number_op:
-                        operation_value = number_op['number']
-                        operation_name = number_op['operation']
-                        selected_operation = operations.get(operation_name)
-                        
-                        if selected_operation:
-                            operation_value = float(operation_value)
-                            x = selected_operation(x, operation_value)
-                
-                return {'result': x, 'status': 'success'}
+            x = algorithm_control(x, steps, operations)
+            return {'result': x, 'status': 'success'}
+    
             
         if alg_mod == 'run':
             steps = incoming_dict.get('steps')
             x = (incoming_dict.get('x'))
-            if x == None:
-                x = 0
-            else:
-                x = float(x)
-            steplen = len(steps) + 1 # Adding one for getting all values in the range.
-            
-            for key in range(1, steplen): 
-                number_op = steps.get(str(key)) 
-                if number_op:
-                    operation_value = number_op['number'] # Getting the number that operation comes with.
-                    operation_name = number_op['operation']
-                    selected_operation = operations.get(operation_name)
-                    
-                    if selected_operation:
-                        operation_value = int(operation_value)
-                        x = selected_operation(x, operation_value) # x is the number that user enters at the end.
-            
+            x = algorithm_control(x, steps, operations)
             return {'result': x, 'status': 'success'}
+        
+
+        if alg_mod == 'delete':
+            alg_save_name = incoming_dict.get('alg_save_name')
+            removed_item = save_data.pop(alg_save_name, None)
+            if removed_item is not None:
+                with open(file_name, 'w') as f:
+                    json.dump(save_data, f, indent=4)
+                return {'status': 'deleted'}
+            else:
+                return {'status': 'failed', 'error': f'there is no save as {alg_save_name}'}
+
+       
+        if alg_mod == 'clear_all':
+            save_data.clear() 
+            with open(file_name, 'w') as f:
+                json.dump({}, f, indent=4) 
+            return {'status': 'all_clean'}
 
 # Server Starting
 if __name__ == '__main__':
