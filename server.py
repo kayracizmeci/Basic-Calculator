@@ -115,5 +115,5 @@ def receive_data(incoming_dict: dict):
 # Server Starting
 if __name__ == '__main__':
     host = '127.0.0.1'
-    port = int(os.getenv('PORT', '54821'))
+    port = int(os.getenv('PORT', '54823'))
     uvicorn.run(app, host=host, port=port)
