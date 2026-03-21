@@ -13,3 +13,4 @@ A macOS calculator made of a SwiftUI app and a small Python (FastAPI) server on 
 - **Python 3** with **FastAPI** and **Uvicorn** (`pip install fastapi uvicorn`).
 - Start `**python server.py`** before using the app (default: `http://127.0.0.1:54823` — set `PORT` if you change it and update the URL in `ContentView.swift`).
 
+ 
