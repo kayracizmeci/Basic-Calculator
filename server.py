@@ -21,9 +21,9 @@ class CalculationReq(BaseModel):
     steps: Optional[Dict[str, Step]] = None
 
     # Operational Mode
-    operation: Optional[str]
-    num1: Optional[float]
-    num2: Optional[float]
+    operation: Optional[str] = None
+    num1: Optional[float] = None
+    num2: Optional[float] = None
 
 app = FastAPI()
 
