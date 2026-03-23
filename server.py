@@ -108,7 +108,7 @@ def receive_data(data: CalculationReq):
     
             
         if data.alg_mod == 'run':
-            x = algorithm_control(x, steps, operations)
+            x = algorithm_control(data.x, data.steps, data.operations)
             return {'result': x, 'status': 'success'}
         
 
