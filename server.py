@@ -58,7 +58,10 @@ operations = {
 }
 
 def algorithm_control(x, steps, operations):
-    x = x is None = 0.0         
+    if x is None:
+        x = 0.0
+    else:
+        x = x      
     if steps:
         steplen = len(steps) + 1
         for key in range(1, steplen): 
