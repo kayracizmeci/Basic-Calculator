@@ -1,8 +1,29 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Optional, Dict
 import uvicorn
 import math
 import os
 import json
+
+
+class Step(BaseModel):
+    number: float
+    operation: str
+
+class CalculationReq(BaseModel):
+    mod: str
+
+    # Algorithm Mode
+    alg_mod: Optional[str] = None
+    x: Optional[float] = None
+    alg_save_name: Optional[str] = None
+    steps: Optional[Dict[str, Step]] = None
+
+    # Operational Mode
+    operation: Optional[str]
+    num1: Optional[float]
+    num2: Optional[float]
 
 app = FastAPI()
 
@@ -37,11 +58,11 @@ operations = {
 }
 
 def algorithm_control(x, steps, operations):
-    x = float(x) if x is not None else 0.0          
+    x = x is None = 0.0         
     if steps:
         steplen = len(steps) + 1
         for key in range(1, steplen): 
-            if isinstance(x, str): break # If x is a string, breaks the loop.
+            if isinstance(x, str): break # If x is a string, breaks the loop
             number_op = steps.get(str(key)) 
             if number_op:
                 operation_value = float(number_op['number'])  
@@ -52,63 +73,54 @@ def algorithm_control(x, steps, operations):
     return x
 
 @app.post('/receive_data')
-def receive_data(incoming_dict: dict):
-    mod = incoming_dict.get('mod')
-
-    if mod == 'op':
-          operation = incoming_dict.get('operation')
-          num1 = incoming_dict.get('num1', None)
-          num2 = incoming_dict.get('num2', None)
-
+def receive_data(data: CalculationReq):
    
     # Operation 
-    if mod == 'op':
-      selected_operation = operations.get(operation)  
+    if data.mod == 'op':
+      selected_operation = operations.get(data.operation)  
       if selected_operation is None:
           return {'error': 'invalid operation', 'status': 'failed'}
-      result = selected_operation(num1, num2)
+      result = selected_operation(data.num1, data.num2)
       if isinstance(result, str):
           return {'error': result, 'status': 'failed'}
     
       return {'result': result, 'status': 'success'}
     
     # Algorithm
-    if mod == 'alg':
-        alg_mod = incoming_dict.get('alg_mod')
-        data = load()  
-        if alg_mod == 'save':
-            alg_save_name = incoming_dict.get('alg_save_name') # We are getting the key for accesing the whole data.
-            alg_data = incoming_dict.get(alg_save_name)
-            data[alg_save_name] = alg_data
-            save(data)
-            return {'status': 'saved'}
+    if data.mod == 'alg': 
+        if data.alg_mod == 'save':
+            all_saved_data = load()
+            steps = {key: value.model_dump() for key, value in data.steps.items()}
+            all_saved_data[data.alg_save_name] = steps
+            save(all_saved_data)
+            return {'status': 'saved', 'name': data.alg_save_name}      
         
-        if alg_mod == 'run_save':
-            alg_save_name = incoming_dict.get('alg_save_name') 
-            steps = data.get(alg_save_name)
-            x = incoming_dict.get('x')
-            x = algorithm_control(x, steps, operations) # Runs the algorithm.
+        if data.alg_mod == 'run_save':
+            all_saved_data = load()
+            steps = all_saved_data.get(data.alg_save_name)
+            if not steps:
+                return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
+            x = algorithm_control(data.x, data.steps, operations) 
             return {'result': x, 'status': 'success'}
     
             
-        if alg_mod == 'run':
-            steps = incoming_dict.get('steps')
-            x = (incoming_dict.get('x'))
+        if data.alg_mod == 'run':
             x = algorithm_control(x, steps, operations)
             return {'result': x, 'status': 'success'}
         
 
-        if alg_mod == 'delete':
-            alg_save_name = incoming_dict.get('alg_save_name') 
-            removed_item = data.pop(alg_save_name, None) # Removes the item from the data.
+        if data.alg_mod == 'delete':
+            all_saved_data = load()  
+            removed_item = all_saved_data.pop(data.alg_save_name, None) 
+            
             if removed_item is not None: 
-                save(data) # Updates the data.
-                return {'status': 'deleted'}
+                save(all_saved_data) 
+                return {'status': 'deleted', 'name': data.alg_save_name}
             else:
-                return {'status': 'failed', 'error': f'there is no save as {alg_save_name}'}
+                return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
 
        
-        if alg_mod == 'clear_all':
+        if data.alg_mod == 'clear_all':
             save({}) 
             return {'status': 'all_clean'}
 
