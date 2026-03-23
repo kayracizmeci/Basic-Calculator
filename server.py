@@ -100,10 +100,10 @@ def receive_data(data: CalculationReq):
         
         if data.alg_mod == 'run_save':
             all_saved_data = load()
-            steps = all_saved_data.get(data.alg_save_name)
-            if not steps:
+            saved_steps = all_saved_data.get(data.alg_save_name) 
+            if not saved_steps:
                 return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
-            x = algorithm_control(data.x, data.steps, operations) 
+            x = algorithm_control(data.x, saved_steps, operations) 
             return {'result': x, 'status': 'success'}
     
             
