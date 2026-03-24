@@ -48,20 +48,22 @@ if not os.path.exists(file_name):
     save({})
 
 operations = {
-    'addition': lambda n1, n2: float(n1) + float(n2) if n1 != None and n2 != None else 'no value',
-    'subtraction': lambda n1, n2: float(n1) - float(n2) if n1 != None and n2 != None else 'no value',
-    'multiplication': lambda n1, n2: float(n1) * float(n2) if n1 != None and n2 != None else 'no value',
-    'division': lambda n1, n2: float(n1) / float(n2) if n1 != None and n2 != None and float(n2) != 0 else 'no value/division by zero',
-    'power': lambda n1, n2: ('no value' if n1 is None or n2 is None else ('no value/division by zero' if float(n1) == 0.0 and float(n2) < 0 else ('complex' if float(n1) < 0 and not float(n2).is_integer() else float(n1) ** float(n2)))),
-    'square_root': lambda n1, n2: math.sqrt(float(n1)) if n1 != None and float(n1) >= 0 else 'undefined/complex',
-    'percentage': lambda n1, n2: (float(n1) * float(n2)) / 100 if n1 != None and n2 != None else 'no value'
+    'addition': lambda n1, n2: n1 + n2,
+    'subtraction': lambda n1, n2: n1 - n2,
+    'multiplication': lambda n1, n2: n1 * n2,
+    'division': lambda n1, n2: n1 / n2 if n2 != 0 else 'division by zero',
+    'power': lambda n1, n2: (
+        'undefined' if n1 == 0 and n2 < 0 else (
+            'complex' if n1 < 0 and not float(n2).is_integer() else n1 ** n2
+        )
+    ),
+    'square_root': lambda n1, n2: math.sqrt(n1) if n1 >= 0 else 'undefined/complex',
+    'percentage': lambda n1, n2: (n1 * n2) / 100
 }
 
 def algorithm_control(x, steps, operations):
     if x is None:
-        x = 0.0
-    else:
-        x = x      
+        x = 0.0     
     if steps:
         steplen = len(steps) + 1
         for key in range(1, steplen): 
@@ -83,22 +85,26 @@ def receive_data(data: CalculationReq):
       selected_operation = operations.get(data.operation)  
       if selected_operation is None:
           return {'error': 'invalid operation', 'status': 'failed'}
+      elif data.num1 is None or data.num2 is None:
+          return {'error': 'no value', 'status': 'failed'}
+      
       result = selected_operation(data.num1, data.num2)
+      
       if isinstance(result, str):
-          return {'error': result, 'status': 'failed'}
-    
-      return {'result': result, 'status': 'success'}
-    
+            return {'error': result, 'status': 'failed'}
+      else:
+            return {'result': result, 'status': 'success'}
+      
     # Algorithm
-    if data.mod == 'alg': 
+    elif data.mod == 'alg':  
         if data.alg_mod == 'save':
-            all_saved_data = load()
+            all_saved_data = load() # We are using load for accessing to the data
             steps = {key: value.model_dump() for key, value in data.steps.items()}
             all_saved_data[data.alg_save_name] = steps
             save(all_saved_data)
             return {'status': 'saved', 'name': data.alg_save_name}      
         
-        if data.alg_mod == 'run_save':
+        elif data.alg_mod == 'run_save':
             all_saved_data = load()
             saved_steps = all_saved_data.get(data.alg_save_name) 
             if not saved_steps:
@@ -107,12 +113,12 @@ def receive_data(data: CalculationReq):
             return {'result': x, 'status': 'success'}
     
             
-        if data.alg_mod == 'run':
+        elif data.alg_mod == 'run':
             x = algorithm_control(data.x, data.steps, operations)
             return {'result': x, 'status': 'success'}
         
 
-        if data.alg_mod == 'delete':
+        elif data.alg_mod == 'delete':
             all_saved_data = load()  
             removed_item = all_saved_data.pop(data.alg_save_name, None) 
             
@@ -123,10 +129,10 @@ def receive_data(data: CalculationReq):
                 return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
 
        
-        if data.alg_mod == 'clear_all':
+        elif data.alg_mod == 'clear_all':
             save({}) 
             return {'status': 'all_clean'}
-
+        
 # Server Starting
 if __name__ == '__main__':
     host = '127.0.0.1'
