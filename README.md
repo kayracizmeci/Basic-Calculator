@@ -1,4 +1,4 @@
-# 🧮 MacOS Calculator
+# 🧮 Basic Calculator
 
 A macOS calculator made of a SwiftUI app and a small Python (FastAPI) server on your machine. You enter two numbers, tap an operation, and the server returns the result over HTTP on `localhost`.
 
