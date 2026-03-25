@@ -61,17 +61,18 @@ operations = {
     'percentage': lambda n1, n2: (n1 * n2) / 100
 }
 
-def algorithm_control(x, steps, operations):
+def algorithm_control(x: float | None, steps: Dict[str, Step] | None, operations: dict):
     if x is None:
         x = 0.0     
     if steps:
-        steplen = len(steps) + 1
-        for key in range(1, steplen): 
-            if isinstance(x, str): break # If x is a string, breaks the loop
+        for key in sorted(steps.keys(), key=int): 
+            if isinstance(x, str): 
+                break  
             number_op = steps.get(str(key)) 
             if number_op:
-                operation_value = float(number_op['number'])  
-                operation_name = number_op['operation']
+                is_dict = isinstance(number_op, dict)     
+                operation_value = number_op['number'] if is_dict else number_op.number
+                operation_name = number_op['operation'] if is_dict else number_op.operation
                 selected_operation = operations.get(operation_name)  
                 if selected_operation:
                     x = selected_operation(x, operation_value)
