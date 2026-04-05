@@ -5,6 +5,7 @@ import uvicorn
 import math
 import os
 import json
+import aiofiles
 
 
 class Step(BaseModel):
@@ -29,23 +30,24 @@ app = FastAPI()
 
 file_name = 'algorithm.json'
 
-def save(data):
-    with open(file_name, 'w') as f:
-        json.dump(data, f, indent=4)
+async def save(data):
+    async with aiofiles.open(file_name, 'w') as f:
+        await f.write(json.dumps(data, indent=4))
 
 
-def load():
+async def load():
     try:
-        with open(file_name, 'r') as f:
-            data = json.load(f)
+        if not os.path.exists(file_name):
+            return {}
+        async with aiofiles.open(file_name, 'r') as f:
+            data_raw = await f.read() 
+            data = json.loads(data_raw) if data_raw else {} 
     except (json.JSONDecodeError, IOError):
         data = {}
     if not isinstance(data, dict): # If data is not a dictionary, returns an empty dictionary.
         data = {}
     return data
 
-if not os.path.exists(file_name):
-    save({})
 
 operations = {
     'addition': lambda n1, n2: n1 + n2,
@@ -79,17 +81,19 @@ def algorithm_control(x: float | None, steps: Dict[str, Step] | None, operations
     return x
 
 @app.post('/receive_data')
-def receive_data(data: CalculationReq):
+async def receive_data(data: CalculationReq):
    
     # Operation 
     if data.mod == 'op':
       selected_operation = operations.get(data.operation)  
       if selected_operation is None:
           return {'error': 'invalid operation', 'status': 'failed'}
-      elif data.num1 is None or data.num2 is None:
+      elif data.num1 is None:
+          return {'error': 'no value', 'status': 'failed'}
+      elif data.operation != 'square_root' and data.num2 is None:
           return {'error': 'no value', 'status': 'failed'}
       
-      result = selected_operation(data.num1, data.num2)
+      result = selected_operation(data.num1, data.num2 if data.num2 is not None else 0)
       
       if isinstance(result, str):
             return {'error': result, 'status': 'failed'}
@@ -99,40 +103,58 @@ def receive_data(data: CalculationReq):
     # Algorithm
     elif data.mod == 'alg':  
         if data.alg_mod == 'save':
-            all_saved_data = load() # We are using load for accessing to the data
+            if not data.alg_save_name:
+                return {'status': 'failed', 'error': 'missing save name'}
+            if not data.steps:
+                return {'status': 'failed', 'error': 'missing steps'}
+            all_saved_data = await load() # We are using load for accessing to the data
             steps = {key: value.model_dump() for key, value in data.steps.items()}
             all_saved_data[data.alg_save_name] = steps
-            save(all_saved_data)
+            await save(all_saved_data)
             return {'status': 'saved', 'name': data.alg_save_name}      
         
         elif data.alg_mod == 'run_save':
-            all_saved_data = load()
+            if not data.alg_save_name:
+                return {'status': 'failed', 'error': 'missing save name'}
+            all_saved_data = await load()
             saved_steps = all_saved_data.get(data.alg_save_name) 
             if not saved_steps:
                 return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
             x = algorithm_control(data.x, saved_steps, operations) 
+            if isinstance(x, str):
+                return {'status': 'failed', 'error': x}
             return {'result': x, 'status': 'success'}
     
             
         elif data.alg_mod == 'run':
+            if not data.steps:
+                return {'status': 'failed', 'error': 'missing steps'}
             x = algorithm_control(data.x, data.steps, operations)
+            if isinstance(x, str):
+                return {'status': 'failed', 'error': x}
             return {'result': x, 'status': 'success'}
         
 
         elif data.alg_mod == 'delete':
-            all_saved_data = load()  
+            if not data.alg_save_name:
+                return {'status': 'failed', 'error': 'missing save name'}
+            all_saved_data = await load()  
             removed_item = all_saved_data.pop(data.alg_save_name, None) 
             
             if removed_item is not None: 
-                save(all_saved_data) 
+                await save(all_saved_data) 
                 return {'status': 'deleted', 'name': data.alg_save_name}
             else:
                 return {'status': 'failed', 'error': f'there is no save as {data.alg_save_name}'}
 
        
         elif data.alg_mod == 'clear_all':
-            save({}) 
+            await save({}) 
             return {'status': 'all_clean'}
+        else:
+            return {'status': 'failed', 'error': 'invalid algorithm mode'}
+    else:
+        return {'status': 'failed', 'error': 'invalid mode'}
         
 # Server Starting
 if __name__ == '__main__':
