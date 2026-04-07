@@ -1,6 +1,8 @@
 import SwiftUI
 import AppKit
 
+private let appWindowSize = NSSize(width: 340, height: 500)
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -13,11 +15,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func bringWindowsForward() {
-        if let window = NSApp.windows.first(where: { $0.canBecomeKey }) {
+        guard let window = preferredWindow else { return }
+        configure(window: window)
+
+        if window.canBecomeKey {
             window.makeKeyAndOrderFront(nil)
-        } else if let window = NSApp.windows.first {
+        } else {
             window.orderFrontRegardless()
         }
+    }
+
+    private var preferredWindow: NSWindow? {
+        NSApp.windows.first(where: { $0.canBecomeKey }) ?? NSApp.windows.first
+    }
+
+    private func configure(window: NSWindow) {
+        window.styleMask.remove(.resizable)
+        window.minSize = appWindowSize
+        window.maxSize = appWindowSize
+        window.setContentSize(appWindowSize)
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
@@ -33,6 +49,6 @@ struct CalcApp: App {
         WindowGroup {
             ContentView()
         }
-        .defaultSize(width: 320, height: 720)
+        .defaultSize(width: appWindowSize.width, height: appWindowSize.height)
     }
 }
