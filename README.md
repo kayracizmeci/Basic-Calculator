@@ -4,10 +4,12 @@ A macOS calculator made with a SwiftUI client and a Python (FastAPI) backend on 
 
 ## What it does
 
-- **Operation mode:** add, subtract, multiply, divide, power (`^`), square root (`√`), and percentage (`%`).
-- **Algorithm mode UI:** build multi-step algorithms, run them, save by name, run saved algorithms, delete a save, and clear all saves.
-- **Step list behavior:** only the last 5 steps are shown in the UI (full step list is still sent for run/save).
-- **Error handling:** backend error messages are shown in the UI and prefixed with `Error:`.
+- **Two working modes:** switch between `Classic` and `Algorithm` from a segmented mode picker.
+- **Classic mode:** add, subtract, multiply, divide, percentage (`%`), power (`^`), and square root (`√`).
+- **Algorithm mode:** build multi-step algorithms, run them with a start value (`x`), save by name, run saved algorithms, delete a saved algorithm, clear all saved algorithms, and remove the last unsaved step.
+- **Step preview behavior:** shows the latest step and total step count in the UI.
+- **Input and error handling:** required fields are validated in the app, backend error messages are normalized with `Error:` prefixes, and invalid/non-JSON responses are surfaced clearly.
+- **Window behavior:** app launches as a fixed, non-resizable `340x500` window.
 
 ## ⚙️ Mathematical Operations 
 
@@ -56,5 +58,3 @@ swiftc -parse-as-library main.swift ContentView.swift -o CalcApp && ./CalcApp
 ```
 
 Backend default URL is `http://127.0.0.1:54823/receive_data`.
-
- 
